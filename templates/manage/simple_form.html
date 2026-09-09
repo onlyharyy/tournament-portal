@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<header class="admin-top"><div><p class="label">ADMIN</p><h1>{% if object.pk %}Edit{% else %}Add{% endif %} {{ title }}</h1></div><a class="btn" href="{% url 'dashboard' %}">Dashboard</a></header>
+<main class="form-wrap"><form method="post" class="form-card">{% csrf_token %}
+{% if type == 'schools' %}
+<label>School Name</label><input name="name" value="{{ object.name|default:'' }}" required><p class="muted" style="margin-top:8px">School code is generated automatically, e.g. <b>KC01AIS</b>.</p>
+{% elif type == 'games' %}
+<label>Game Name</label><input name="name" value="{{ object.name|default:'' }}" placeholder="e.g. The Code" required><label>Game Details</label><textarea name="description" rows="5" placeholder="Rules, objective, scoring and remarks.">{{ object.description|default:'' }}</textarea><label class="check"><input type="checkbox" name="active" {% if object.active or not object.pk %}checked{% endif %}> Active on live scoreboard</label>
+{% else %}
+<label>Player</label><select name="player" required>{% for player in players %}<option value="{{ player.id }}" {% if object.player_id == player.id %}selected{% endif %}>{{ player.name }} — {{ player.school.name }}</option>{% endfor %}</select><label>Game</label><select name="game" required>{% for game in games %}<option value="{{ game.id }}" {% if object.game_id == game.id %}selected{% endif %}>{{ game.name }}</option>{% endfor %}</select><label>Points</label><input type="number" name="points" value="{{ object.points|default:0 }}" required><label>Remarks</label><input name="remarks" value="{{ object.remarks|default:'' }}">
+{% endif %}<button class="submit" type="submit">SAVE</button></form></main>
+{% endblock %}

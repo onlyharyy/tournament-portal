@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Admin Login{% endblock %}
+{% block content %}
+<main class="login-page">
+<div class="login-card">
+<p class="label">TOURNAMENT MANAGEMENT</p><h1>Admin Login</h1><p class="muted">Sign in to manage players, schools, games and scores.</p>
+{% for message in messages %}<div class="error">{{ message }}</div>{% endfor %}
+<form method="post">{% csrf_token %}
+<label>Username</label><input name="username" required autofocus>
+<label>Password</label><input type="password" name="password" required>
+<button type="submit">LOGIN</button>
+</form>
+<a class="back" href="{% url 'scoreboard' %}">← Back to scoreboard</a>
+</div>
+</main>
+{% endblock %}

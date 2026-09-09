@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Participant Registration{% endblock %}
+{% block head %}<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>{% endblock %}
+{% block content %}
+<header class="public-header compact"><a class="brand-public" href="{% url 'home' %}"><span>✦</span><div><b>{{ config.name }}</b><small>PARTICIPANT REGISTRATION</small></div></a><a class="outline-btn" href="{% url 'home' %}">← Home</a></header>
+<main class="register-page">
+<div class="page-heading"><p class="gold-label">REGISTER BEFORE TOURNAMENT DAY</p><h1>Participant Registration</h1><p>Faculty coordinators must register first. Students can then choose the coordinator registered for their school.</p></div>
+{% for message in messages %}<div class="alert">{{ message }}</div>{% endfor %}
+{% if not schools %}<div class="alert">No schools have been added yet. Please ask the tournament administrator to add schools first.</div>{% endif %}
+{% if not faculties %}<div class="alert">No faculty coordinators are registered yet. Students can be registered after faculty registration.</div>{% endif %}
+<form method="post" id="registrationForm" class="register-card">{% csrf_token %}
+<div class="category-grid">
+<label class="category"><input type="radio" name="category" value="teacher"><span><b>01</b><strong>Teacher / Faculty</strong><small>Name, gender, school, phone, email and verified face.</small></span></label>
+<label class="category"><input type="radio" name="category" value="student" checked><span><b>02</b><strong>Student</strong><small>Complete student details + registered faculty coordinator + verified face.</small></span></label>
+</div>
+<section class="reg-section"><div class="reg-title"><span>01</span><div><h2>Participant details</h2><small>Every field marked * is mandatory.</small></div></div>
+<div class="field-grid">
+<label>Full Name *<input name="name" required autocomplete="name"></label>
+<label>Gender *<select name="gender" required><option value="">Select gender</option><option>Male</option><option>Female</option><option>Other</option></select></label>
+<label>School *<select name="school" id="school" required><option value="">Select school</option>{% for school in schools %}<option value="{{ school.id }}">{{ school.name }} ({{ school.code }})</option>{% endfor %}</select></label>
+<label class="student-only">Standard / Class *<select name="standard" id="standard" required><option value="">Select class</option>{% for n in "123456789"|make_list %}<option>{{ n }}</option>{% endfor %}<option>10th</option><option>11th</option><option>12th</option></select></label>
+<label class="student-only">Division *<input name="division" required placeholder="e.g. A"></label>
+<label class="student-only">Date of Birth *<input name="date_of_birth" id="dob" type="date" required></label>
+<label class="student-only">Age <input name="age" id="age" type="number" readonly placeholder="Auto calculated"></label>
+<label class="student-only">Student ID / Enrollment No. *<input name="enrollment_no" required></label>
+<label>Mobile Number *<input name="phone" type="tel" required autocomplete="tel"></label>
+<label>Email *<input name="email" type="email" required autocomplete="email"></label>
+<label class="student-only full">Faculty Coordinator *<select name="faculty_coordinator" id="faculty" required><option value="">Select coordinator</option>{% for f in faculties %}<option value="{{ f.id }}" data-school="{{ f.school_id }}">{{ f.name }} — {{ f.faculty_code }}</option>{% endfor %}</select></label>
+<label class="student-only full">Aadhaar Number *<input name="aadhaar_number" inputmode="numeric" pattern="[0-9]{12}" maxlength="12" minlength="12" placeholder="12 digit Aadhaar number" required></label>
+</div></section>
+<section class="reg-section"><div class="reg-title"><span>02</span><div><h2>Verified live selfie</h2><small>Exactly one clear face must be visible. File uploads are not accepted.</small></div></div>
+<div class="verify-layout"><div class="camera-box"><video id="camera" autoplay muted playsinline></video><canvas id="snapshot"></canvas><div class="camera-overlay"><i></i><span>FACE POSITION</span></div></div><div class="verify-side"><div class="verify-status" id="cameraStatus">Loading face verification…</div><button type="button" id="startCamera" class="outline-btn">ENABLE CAMERA</button><button type="button" id="capture" class="gold-btn" disabled>CAPTURE & VERIFY</button><button type="button" id="retake" class="outline-btn" disabled>RETAKE SELFIE</button><div class="rules"><b>Selfie rules</b><span>• One face only</span><span>• Face centered and clearly visible</span><span>• Good lighting</span><span>• No sunglasses / heavy obstruction</span></div></div></div>
+<div id="faceResult" class="face-result"></div><input type="hidden" name="photo_data" id="photoData"><input type="hidden" name="face_descriptor" id="faceDescriptor"></section>
+<label class="consent"><input type="checkbox" id="consent" required> <span>I confirm the details are correct and consent to the tournament using this selfie for registration and face check-in.</span></label>
+<button class="gold-btn submit-registration" id="submitBtn" type="submit" disabled>COMPLETE REGISTRATION →</button>
+</form></main>
+{% endblock %}
+{% block scripts %}
+<script>
+const video=document.getElementById('camera'),canvas=document.getElementById('snapshot'),start=document.getElementById('startCamera'),capture=document.getElementById('capture'),retake=document.getElementById('retake'),photo=document.getElementById('photoData'),descriptor=document.getElementById('faceDescriptor'),statusEl=document.getElementById('cameraStatus'),result=document.getElementById('faceResult'),submit=document.getElementById('submitBtn'),consent=document.getElementById('consent'),school=document.getElementById('school'),faculty=document.getElementById('faculty'),dob=document.getElementById('dob'),age=document.getElementById('age');
+let stream=null,verified=false,modelsReady=false;
+const studentEls=[...document.querySelectorAll('.student-only')];
+const standard=document.getElementById('standard');
+function setCategory(cat){const isStudent=cat==='student';studentEls.forEach(e=>e.style.display=isStudent?'flex':'none');standard.required=isStudent;faculty.required=isStudent;dob.required=isStudent;document.querySelector('[name="division"]').required=isStudent;document.querySelector('[name="enrollment_no"]').required=isStudent;document.querySelector('[name="aadhaar_number"]').required=isStudent;document.querySelector('[name="phone"]').required=true;if(!isStudent)faculty.value='';updateSubmit();}
+document.querySelectorAll('input[name="category"]').forEach(r=>r.addEventListener('change',()=>setCategory(r.value)));setCategory('student');
+function filterFaculty(){const sid=school.value;[...faculty.options].forEach((o,i)=>{if(i===0)return;o.hidden=!!sid&&o.dataset.school!==sid;});if(faculty.selectedOptions[0]?.hidden)faculty.value='';}school.addEventListener('change',filterFaculty);filterFaculty();
+dob.addEventListener('change',()=>{if(!dob.value){age.value='';return;}const b=new Date(dob.value+'T00:00:00'),t=new Date();let a=t.getFullYear()-b.getFullYear();if(t.getMonth()<b.getMonth()||(t.getMonth()===b.getMonth()&&t.getDate()<b.getDate()))a--;age.value=(a>=0&&a<=120)?a:'';});
+async function loadModels(){try{await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri('https://justadudewhohacks.github.io/face-api.js/models'),faceapi.nets.faceLandmark68Net.loadFromUri('https://justadudewhohacks.github.io/face-api.js/models'),faceapi.nets.faceRecognitionNet.loadFromUri('https://justadudewhohacks.github.io/face-api.js/models')]);modelsReady=true;statusEl.textContent='Face verification ready. Enable your camera.';capture.disabled=!stream;}catch(e){statusEl.textContent='Face models could not load. Check internet and refresh.';}}loadModels();
+start.onclick=async()=>{if(!navigator.mediaDevices?.getUserMedia){statusEl.textContent='Camera is not available in this browser.';return;}try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'user'},width:{ideal:720},height:{ideal:540}},audio:false});video.srcObject=stream;await video.play();start.disabled=true;capture.disabled=!modelsReady;statusEl.textContent=modelsReady?'Camera ready. Center one face and capture.':'Waiting for face models…';}catch(e){statusEl.textContent='Camera permission was denied or camera is unavailable.';}};
+capture.onclick=async()=>{if(!stream||!modelsReady)return;statusEl.textContent='Checking selfie…';try{const det=await faceapi.detectAllFaces(video,new faceapi.TinyFaceDetectorOptions({inputSize:416,scoreThreshold:.6})).withFaceLandmarks().withFaceDescriptors();if(det.length!==1){result.className='face-result bad';result.textContent=det.length===0?'REJECTED — No face detected.':'REJECTED — Exactly one face must be visible.';return;}const box=det[0].detection.box;const minSide=Math.min(video.videoWidth,video.videoHeight);if(box.width<minSide*.20||box.height<minSide*.20){result.className='face-result bad';result.textContent='REJECTED — Move closer so the face is clearly visible.';return;}canvas.width=video.videoWidth;canvas.height=video.videoHeight;canvas.getContext('2d').drawImage(video,0,0);photo.value=canvas.toDataURL('image/jpeg',.92);descriptor.value=JSON.stringify(Array.from(det[0].descriptor));verified=true;result.className='face-result good';result.textContent='VERIFIED — One clear face detected. Selfie accepted.';video.style.display='none';canvas.style.display='block';capture.disabled=true;retake.disabled=false;stopCamera();updateSubmit();}catch(e){result.className='face-result bad';result.textContent='Selfie verification failed. Please try again.';}};
+retake.onclick=()=>{photo.value='';descriptor.value='';verified=false;canvas.style.display='none';video.style.display='block';retake.disabled=true;start.disabled=false;capture.disabled=true;result.textContent='';statusEl.textContent='Enable camera again for a new selfie.';updateSubmit();};
+function stopCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}}function updateSubmit(){submit.disabled=!(verified&&consent.checked);}consent.addEventListener('change',updateSubmit);window.addEventListener('beforeunload',stopCamera);
+document.getElementById('registrationForm').addEventListener('submit',e=>{if(!verified){e.preventDefault();alert('Please complete selfie verification first.');return;}const cat=document.querySelector('input[name="category"]:checked')?.value;if(cat==='student'&&!dob.value){e.preventDefault();alert('Date of Birth is required.');}});
+</script>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Faculty Registration{% endblock %}
+{% block content %}
+<header class="admin-top"><div><p class="label">FACULTY MANAGEMENT</p><h1>{% if object.pk %}Edit Faculty{% else %}Register Faculty{% endif %}</h1></div><a class="btn" href="{% url 'faculties' %}">← Back</a></header>
+<main class="form-wrap"><form method="post" class="form-card">{% csrf_token %}
+<label>School <em>*</em></label><select name="school" required><option value="">Select school</option>{% for school in schools %}<option value="{{ school.id }}" {% if object.school_id == school.id %}selected{% endif %}>{{ school.name }} ({{ school.code }})</option>{% endfor %}</select>
+<label>Faculty Name <em>*</em></label><input name="name" value="{{ object.name|default:'' }}" placeholder="Faculty full name" required>
+<label>Gender</label><select name="gender"><option value="">Select gender</option><option {% if object.gender == 'Male' %}selected{% endif %}>Male</option><option {% if object.gender == 'Female' %}selected{% endif %}>Female</option><option {% if object.gender == 'Other' %}selected{% endif %}>Other</option></select>
+<label>Phone Number <em>*</em></label><input name="phone" value="{{ object.phone|default:'' }}" required>
+<label>Email <em>*</em></label><input type="email" name="email" value="{{ object.email|default:'' }}" required>
+{% if object.pk %}<label>Faculty Code</label><input value="{{ object.faculty_code }}" readonly>{% else %}<p class="muted" style="margin:10px 0">Faculty code will be generated automatically after saving, e.g. <b>KC01AISHP</b>.</p>{% endif %}
+<button class="submit" type="submit">SAVE FACULTY</button></form></main>
+{% endblock %}

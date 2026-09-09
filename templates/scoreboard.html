@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Live Scoreboard{% endblock %}
+
+{% block content %}
+
+<header class="public-header compact">
+  <a class="brand-public" href="{% url 'home' %}">
+    <span>✦</span>
+    <div>
+      <b>{{ config.name }}</b>
+      <small>LIVE SCOREBOARD</small>
+    </div>
+  </a>
+
+  <div class="live">
+    <span></span> LIVE
+  </div>
+</header>
+
+
+<main class="boards" style="margin-top:40px">
+
+  <!-- INDIVIDUAL LEADERBOARD -->
+  <section class="board">
+
+    <div class="board-title">
+      <p class="label">INDIVIDUAL LEADERBOARD</p>
+      <h2>Player Scores</h2>
+    </div>
+
+    <div class="table head player-grid">
+      <span>RANK</span>
+      <span>PLAYER</span>
+      <span>SCHOOL</span>
+      <span>SCORE</span>
+    </div>
+
+    {% for player in players %}
+
+    <div class="table player-grid row">
+
+      <b class="rank
+        {% if forloop.counter == 1 %}first
+        {% elif forloop.counter == 2 %}second
+        {% elif forloop.counter == 3 %}third{% endif %}
+      ">
+        {{ forloop.counter|stringformat:"02d" }}
+      </b>
+
+      <strong>{{ player.name }}</strong>
+
+      <span>{{ player.school.name }}</span>
+
+      <strong>{{ player.total|default:0 }}</strong>
+
+    </div>
+
+    {% empty %}
+
+    <div class="empty">
+      No player scores yet.
+    </div>
+
+    {% endfor %}
+
+  </section>
+
+
+  <!-- SCHOOL LEADERBOARD -->
+  <section class="board">
+
+    <div class="board-title">
+      <p class="label">OVERALL LEADERBOARD</p>
+      <h2>School Scores</h2>
+    </div>
+
+    <div class="table head school-grid">
+      <span>RANK</span>
+      <span>SCHOOL</span>
+      <span>PLAYERS</span>
+      <span>SCORE</span>
+    </div>
+
+    {% for school in schools %}
+
+    <div class="table school-grid row">
+
+      <b class="rank
+        {% if forloop.counter == 1 %}first
+        {% elif forloop.counter == 2 %}second
+        {% elif forloop.counter == 3 %}third{% endif %}
+      ">
+        {{ forloop.counter|stringformat:"02d" }}
+      </b>
+
+      <strong>{{ school.name }}</strong>
+
+      <span>{{ school.players.count }}</span>
+
+      <strong>{{ school.total|default:0 }}</strong>
+
+    </div>
+
+    {% empty %}
+
+    <div class="empty">
+      No schools added yet.
+    </div>
+
+    {% endfor %}
+
+  </section>
+
+</main>
+
+
+<!-- AUTO REFRESH EVERY 5 SECONDS -->
+<script>
+  setTimeout(function () {
+    window.location.reload();
+  }, 5000);
+</script>
+
+{% endblock %}

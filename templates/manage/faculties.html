@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Faculty{% endblock %}
+{% block content %}
+<header class="admin-top"><div><p class="label">ADMIN</p><h1>Faculty</h1><p class="muted">Register faculty before assigning them to students.</p></div><div class="actions"><a class="btn" href="{% url 'dashboard' %}">Dashboard</a><a class="btn primary" href="{% url 'faculty_add' %}">+ Register Faculty</a></div></header>
+<main class="list-wrap">
+{% for item in faculties %}
+<div class="list-row"><div><strong>{{ item.name }}</strong><small>{{ item.school.name }} • {{ item.faculty_code }} • {{ item.phone }}{% if item.email %} • {{ item.email }}{% endif %}</small></div><div class="actions"><a class="btn" href="{% url 'faculty_edit' item.pk %}">Edit</a><a class="btn danger" href="{% url 'faculty_delete' item.pk %}" onclick="return confirm('Delete this faculty? Students assigned to this faculty must be reassigned first.')">Delete</a></div></div>
+{% empty %}<div class="empty">No faculty registered yet.</div>{% endfor %}
+</main>
+{% endblock %}

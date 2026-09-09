@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<header class="admin-top"><div><p class="label">ADMIN</p><h1>{{ title }}</h1></div><div class="actions"><a class="btn" href="{% url 'dashboard' %}">Dashboard</a><a class="btn primary" href="{% if type == 'players' %}{% url 'player_add' %}{% elif type == 'schools' %}{% url 'school_add' %}{% elif type == 'games' %}{% url 'game_add' %}{% else %}{% url 'score_add' %}{% endif %}">+ Add {{ title|slice:":-1" }}</a></div></header>
+<main class="list-wrap">
+{% for item in items %}
+<div class="list-row">
+  <div>
+  {% if type == 'players' %}<strong>{{ item.name }}</strong><small>{{ item.school.name }} • {{ item.player_code }} • {{ item.standard }}</small>
+  {% elif type == 'schools' %}<strong>{{ item.name }}</strong><small>Code: {{ item.code }} • Players: {{ item.players.count }}</small>
+  {% elif type == 'games' %}<strong>{{ item.name }}</strong><small>{% if item.active %}Active{% else %}Inactive{% endif %}</small>
+  {% else %}<strong>{{ item.player.name }} — {{ item.game.name }}</strong><small>{{ item.points }} points • {{ item.remarks }}</small>{% endif %}
+  </div>
+  <div class="actions">
+  <a class="btn" href="{% if type == 'players' %}{% url 'player_edit' item.pk %}{% elif type == 'schools' %}{% url 'school_edit' item.pk %}{% elif type == 'games' %}{% url 'game_edit' item.pk %}{% else %}{% url 'score_edit' item.pk %}{% endif %}">Edit</a>
+  <a class="btn danger" href="{% if type == 'players' %}{% url 'player_delete' item.pk %}{% elif type == 'schools' %}{% url 'school_delete' item.pk %}{% elif type == 'games' %}{% url 'game_delete' item.pk %}{% else %}{% url 'score_delete' item.pk %}{% endif %}" onclick="return confirm('Delete this item?')">Delete</a>
+  </div>
+</div>
+{% empty %}<div class="empty">No {{ title|lower }} yet.</div>{% endfor %}
+</main>
+{% endblock %}
